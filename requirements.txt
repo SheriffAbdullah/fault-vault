@@ -2,3 +2,4 @@ flask
 python-dotenv
 markdown
 gunicorn
+psycopg2-binary
