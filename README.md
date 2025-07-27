@@ -1,24 +1,98 @@
 # FaultVault
 
-**Tell me your problems** - A simple, secure problem tracking application
-
-## Overview
-
-FaultVault is a minimalist web application for tracking and managing problems. Built with Flask, it features a clean interface, markdown support, and password-protected access.
-
-## Features
-
-- 🔐 **Password Protection** - Simple authentication system
-- 📝 **Markdown Support** - Rich text formatting for problem descriptions
-- 📱 **Responsive Design** - Works on desktop and mobile devices
-- ✅ **CRUD Operations** - Create, Read, Update, Delete problems
-- 🔍 **View Mode** - Full problem details with formatted markdown
-- ⚠️ **Delete Confirmation** - Prevents accidental deletions
-- 💾 **JSON Storage** - Simple file-based data persistence
+A minimal Flask application for problem tracking with PostgreSQL storage.
 
 ## Tech Stack
 
-- **Backend**: Python Flask
+- **Backend**: Flask
+- **Database**: PostgreSQL (Supabase)
+- **Frontend**: Bootstrap 5, vanilla JavaScript
+- **Deployment**: Vercel
+
+## Features
+
+- Password-protected authentication
+- CRUD operations for problems
+- Markdown support for descriptions
+- Responsive UI
+- Session management
+
+## Local Development
+
+### Prerequisites
+- Python 3.7+
+- PostgreSQL database (Supabase recommended)
+
+### Setup
+1. Clone repository:
+   ```bash
+   git clone <repository-url>
+   cd fault-vault
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Configure environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your values
+   ```
+
+4. Run application:
+   ```bash
+   python app.py
+   ```
+
+## Environment Variables
+
+```
+PASSWORD=your-app-password
+SECRET_KEY=your-flask-secret-key
+DATABASE_URL=postgresql://user:pass@host:port/db
+```
+
+## Database Schema
+
+```sql
+CREATE TABLE problems (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Deployment
+
+### Vercel
+1. Push code to GitHub
+2. Connect repository to Vercel
+3. Set environment variables in Vercel dashboard
+4. Deploy
+
+**Note**: Use Supabase Session Pooler URL for Vercel compatibility:
+```
+postgresql://postgres.project:password@aws-region.pooler.supabase.com:5432/postgres
+```
+
+## Project Structure
+
+```
+├── app.py              # Main Flask application
+├── requirements.txt    # Python dependencies
+├── vercel.json        # Vercel configuration
+├── templates/         # HTML templates
+├── static/           # CSS and assets
+└── .env              # Environment variables (local)
+```
+
+## License
+
+MIT
 - **Frontend**: Bootstrap 5, Vanilla JavaScript
 - **Storage**: JSON file
 - **Deployment**: Vercel-ready
