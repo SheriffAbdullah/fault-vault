@@ -20,9 +20,18 @@ app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-here")
 
 # --- Database Functions ---
 def get_db_connection():
-    """Get database connection."""
+    """Get database connection with Vercel optimizations."""
     try:
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        # Add connection timeout for Vercel
+        conn = psycopg2.connect(
+            DATABASE_URL, 
+            cursor_factory=RealDictCursor,
+            connect_timeout=10,
+            keepalives=1,
+            keepalives_idle=600,
+            keepalives_interval=30,
+            keepalives_count=3
+        )
         return conn
     except Exception as e:
         logging.error(f"Database connection error: {e}")
@@ -79,8 +88,11 @@ def convert_markdown(text):
     """Convert markdown text to HTML."""
     return markdown.markdown(text)
 
-# Initialize database on startup
-init_db()
+# Initialize database on startup (only if needed)
+try:
+    init_db()
+except Exception as e:
+    logging.error(f"Database initialization failed: {e}")
 
 # --- Routes ---
 @app.route('/')
@@ -260,6 +272,19 @@ def get_problem(problem_id):
         return jsonify({'error': 'Problem not found'}), 404
     
     return jsonify(problem)
+
+@app.route('/debug')
+def debug():
+    """Debug endpoint to check environment variables (remove in production)."""
+    if 'authenticated' not in session or not session['authenticated']:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    return jsonify({
+        'PASSWORD_SET': bool(PASSWORD),
+        'DATABASE_URL_SET': bool(DATABASE_URL),
+        'SECRET_KEY_SET': bool(app.secret_key and app.secret_key != 'your-secret-key-here'),
+        'DATABASE_URL_PREFIX': DATABASE_URL[:30] + '...' if DATABASE_URL else None,
+    })
 
 # --- Run the app ---
 if __name__ == '__main__':
