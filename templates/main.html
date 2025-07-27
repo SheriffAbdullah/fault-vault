@@ -14,6 +14,14 @@
 
 <!-- Main Content -->
 <div class="container-fluid mt-4">
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Processing...</p>
+    </div>
+    
     <div id="problemsList" class="row">
         <!-- Problems will be loaded here -->
     </div>
@@ -41,7 +49,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="submitProblem()">Submit</button>
+                <button type="button" class="btn btn-primary" onclick="submitProblem()" id="submitBtn">
+                    <span class="btn-text">Submit</span>
+                    <span class="btn-loading" style="display: none;">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Saving...
+                    </span>
+                </button>
             </div>
         </div>
     </div>
@@ -81,7 +95,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()" id="deleteBtn">
+                    <span class="btn-text">Delete</span>
+                    <span class="btn-loading" style="display: none;">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Deleting...
+                    </span>
+                </button>
             </div>
         </div>
     </div>
@@ -102,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load problems from API
 function loadProblems() {
+    showLoading(true);
     fetch('/api/problems')
         .then(response => response.json())
         .then(data => {
@@ -110,7 +131,17 @@ function loadProblems() {
         })
         .catch(error => {
             console.error('Error loading problems:', error);
+            showError('Failed to load problems');
+        })
+        .finally(() => {
+            showLoading(false);
         });
+}
+
+// Show/hide loading indicator
+function showLoading(show) {
+    document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+    document.getElementById('problemsList').style.display = show ? 'none' : 'block';
 }
 
 // Render problems list
@@ -188,8 +219,11 @@ function viewProblem(problemId) {
     const createdAt = formatDate(problem.created_at || problem.timestamp);
     const lastModified = formatDate(problem.last_modified || problem.timestamp);
     
+    // Preserve newlines in the description
+    const descriptionHtml = renderMarkdown(problem.description);
+    
     document.getElementById('viewModalContent').innerHTML = `
-        <div>${renderMarkdown(problem.description)}</div>
+        <div style="white-space: pre-wrap; word-wrap: break-word;">${descriptionHtml}</div>
         <hr>
         <p class="text-muted mb-1">Created at: ${createdAt}</p>
         <p class="text-muted mb-0">Last modified: ${lastModified}</p>
@@ -208,6 +242,9 @@ function deleteProblem(problemId) {
 function confirmDelete() {
     const problemId = parseInt(document.getElementById('deleteId').value);
     
+    // Show loading state and disable inputs
+    setButtonLoading('deleteBtn', true);
+    
     fetch(`/api/problems/${problemId}`, {
         method: 'DELETE',
         headers: {
@@ -220,12 +257,15 @@ function confirmDelete() {
             deleteModal.hide();
             loadProblems(); // Reload the problems list
         } else {
-            alert('Error deleting problem: ' + data.error);
+            showError('Error deleting problem: ' + data.error);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while deleting the problem.');
+        showError('An error occurred while deleting the problem.');
+    })
+    .finally(() => {
+        setButtonLoading('deleteBtn', false);
     });
 }
 
@@ -236,9 +276,13 @@ function submitProblem() {
     const description = document.getElementById('problemDescription').value.trim();
     
     if (!title || !description) {
-        alert('Please fill in both title and description.');
+        showError('Please fill in both title and description.');
         return;
     }
+    
+    // Show loading state and disable inputs
+    setButtonLoading('submitBtn', true);
+    setInputsDisabled(true);
     
     const data = { title, description };
     const url = problemId ? `/api/problems/${problemId}` : '/api/problems';
@@ -257,12 +301,16 @@ function submitProblem() {
             problemModal.hide();
             loadProblems(); // Reload the problems list
         } else {
-            alert('Error saving problem: ' + data.error);
+            showError('Error saving problem: ' + data.error);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while saving the problem.');
+        showError('An error occurred while saving the problem.');
+    })
+    .finally(() => {
+        setButtonLoading('submitBtn', false);
+        setInputsDisabled(false);
     });
 }
 
@@ -271,6 +319,49 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Set button loading state
+function setButtonLoading(buttonId, loading) {
+    const button = document.getElementById(buttonId);
+    const textSpan = button.querySelector('.btn-text');
+    const loadingSpan = button.querySelector('.btn-loading');
+    
+    if (loading) {
+        textSpan.style.display = 'none';
+        loadingSpan.style.display = 'inline-block';
+        button.disabled = true;
+    } else {
+        textSpan.style.display = 'inline-block';
+        loadingSpan.style.display = 'none';
+        button.disabled = false;
+    }
+}
+
+// Enable/disable form inputs
+function setInputsDisabled(disabled) {
+    document.getElementById('problemTitle').disabled = disabled;
+    document.getElementById('problemDescription').disabled = disabled;
+}
+
+// Show error message
+function showError(message) {
+    // Create a toast notification or use a simple alert
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.parentNode.removeChild(alert);
+        }
+    }, 5000);
 }
 </script>
 {% endblock %}

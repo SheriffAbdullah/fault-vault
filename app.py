@@ -5,8 +5,13 @@ from datetime import datetime
 import logging
 from dotenv import load_dotenv
 import markdown
-import psycopg2
-from psycopg2.extras import RealDictCursor
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    DB_AVAILABLE = True
+except ImportError:
+    print("psycopg2 not available, running in test mode")
+    DB_AVAILABLE = False
 
 load_dotenv()
 
@@ -21,6 +26,8 @@ app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-here")
 # --- Database Functions ---
 def get_db_connection():
     """Get database connection with Vercel optimizations."""
+    if not DB_AVAILABLE:
+        return None
     try:
         # Add connection timeout for Vercel
         conn = psycopg2.connect(
@@ -63,6 +70,9 @@ def init_db():
 
 def load_problems():
     """Load problems from database."""
+    if not DB_AVAILABLE:
+        return []
+        
     conn = get_db_connection()
     if not conn:
         return []
@@ -89,10 +99,12 @@ def convert_markdown(text):
     return markdown.markdown(text)
 
 # Initialize database on startup (only if needed)
-try:
-    init_db()
-except Exception as e:
-    logging.error(f"Database initialization failed: {e}")
+if DB_AVAILABLE:
+    try:
+        init_db()
+    except Exception as e:
+        logging.error(f"Database initialization failed: {e}")
+        print("Running in test mode without database")
 
 # --- Routes ---
 @app.route('/')
@@ -149,6 +161,10 @@ def add_problem():
     if not title or not description:
         return jsonify({'error': 'Title and description are required'}), 400
     
+    if not DB_AVAILABLE:
+        # Database not available
+        return jsonify({'error': 'Database not available'}), 503
+    
     conn = get_db_connection()
     if not conn:
         return jsonify({'error': 'Database connection failed'}), 500
@@ -193,6 +209,10 @@ def edit_problem(problem_id):
     if not title or not description:
         return jsonify({'error': 'Title and description are required'}), 400
     
+    if not DB_AVAILABLE:
+        # Database not available
+        return jsonify({'error': 'Database not available'}), 503
+    
     conn = get_db_connection()
     if not conn:
         return jsonify({'error': 'Database connection failed'}), 500
@@ -235,6 +255,10 @@ def edit_problem(problem_id):
 def delete_problem(problem_id):
     if 'authenticated' not in session or not session['authenticated']:
         return jsonify({'error': 'Unauthorized'}), 401
+    
+    if not DB_AVAILABLE:
+        # Database not available
+        return jsonify({'error': 'Database not available'}), 503
     
     conn = get_db_connection()
     if not conn:

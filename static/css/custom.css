@@ -34,6 +34,34 @@ textarea {
     resize: vertical;
 }
 
+/* Preserve whitespace in view modal */
+.view-content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.6;
+}
+
+/* Loading states */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Loading overlay for main content */
+#loadingIndicator {
+    min-height: 200px;
+}
+
+/* Toast notifications */
+.alert {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 /* Improve button spacing */
 .btn {
     margin: 2px;
