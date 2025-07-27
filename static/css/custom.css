@@ -1,0 +1,49 @@
+/* Mobile responsiveness */
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+
+/* Responsive card layout */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn {
+        margin: 2px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .card-text {
+        font-size: 0.875rem;
+    }
+}
+
+/* Ensure textarea allows line breaks */
+textarea {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    resize: vertical;
+}
+
+/* Improve button spacing */
+.btn {
+    margin: 2px;
+}
+
+/* Responsive button layout */
+@media (max-width: 576px) {
+    .btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
