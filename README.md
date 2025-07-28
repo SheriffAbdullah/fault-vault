@@ -183,5 +183,5 @@ fault-vault/
 
 ## License
 
-MIT License - see LICENSE file for details
+GNU GPL License - see LICENSE file for details
 
